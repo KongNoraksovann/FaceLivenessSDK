@@ -1,0 +1,27 @@
+platform :ios, '13.0'
+
+target 'FaceLivenessSDK' do
+  # Comment the next line if you don't want to use dynamic frameworks
+  use_frameworks!
+
+  # For ONNX model support
+  pod 'onnxruntime-objc', '~> 1.14.0'
+  
+  # For face detection - choose one of these
+  pod 'GoogleMLKit/FaceDetection', '~> 3.2.0'  # Using Google's ML Kit (recommended for consistency with Android)
+  # Alternatively, you can use the built-in Vision framework for face detection
+  # Note: Vision is part of iOS and doesn't require a pod
+end
+
+# Post-install configuration
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      config.build_settings['SWIFT_VERSION'] = '5.0'
+      
+      # Ensure proper architecture handling for simulators
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+    end
+  end
+end

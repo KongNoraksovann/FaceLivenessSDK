@@ -1,0 +1,171 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 6.1 effective-5.10 (swiftlang-6.1.0.110.21 clang-1700.0.13.3)
+// swift-module-flags: -target arm64-apple-ios12-simulator -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -module-name FaceLivenessSDK
+// swift-module-flags-ignorable: -no-verify-emitted-module-interface -interface-compiler-version 6.1
+import CoreImage
+@_exported import FaceLivenessSDK
+import Foundation
+import Swift
+import UIKit
+import _Concurrency
+import _StringProcessing
+import _SwiftConcurrencyShims
+import os.log
+import onnxruntime_objc
+import os
+@_inheritsConvenienceInitializers @objc public class BitmapUtils : ObjectiveC.NSObject {
+  @objc public static let MIN_IMAGE_SIZE: Swift.Int
+  @objc public static let MAX_IMAGE_SIZE: Swift.Int
+  @objc public static func validateImage(_ image: UIKit.UIImage?) -> Swift.Bool
+  @objc public static func resizeImage(_ image: UIKit.UIImage, width: Swift.Int, height: Swift.Int) -> UIKit.UIImage?
+  @objc public static func calculateAverageBrightness(_ image: UIKit.UIImage) -> Swift.Float
+  @objc public static func normalizeImage(_ image: UIKit.UIImage, width: Swift.Int, height: Swift.Int, means: [Swift.Float], stds: [Swift.Float]) -> [Swift.Float]?
+  @objc public static func preprocessImage(_ image: UIKit.UIImage, size: Swift.Int) -> onnxruntime_objc.ORTValue?
+  @objc override dynamic public init()
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @objc public class LogUtils : ObjectiveC.NSObject {
+  @objc public static func setDebugEnabled(_ enabled: Swift.Bool)
+  @objc public static func d(_ tag: Swift.String, _ message: Swift.String)
+  @objc public static func i(_ tag: Swift.String, _ message: Swift.String)
+  @objc public static func w(_ tag: Swift.String, _ message: Swift.String)
+  @objc public static func e(_ tag: Swift.String, _ message: Swift.String)
+  @objc public static func e(_ tag: Swift.String, _ message: Swift.String, _ error: any Swift.Error)
+  @objc override dynamic public init()
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @objc public class ModelUtils : ObjectiveC.NSObject {
+  @objc public static func loadModelFromBundle(_ modelName: Swift.String) throws -> Foundation.URL
+  @objc public static func createONNXSession(_ modelName: Swift.String) throws -> onnxruntime_objc.ORTSession
+  @objc public static func copyModelsFromBundleIfNeeded() -> Swift.Bool
+  @objc public static func getInputName(_ session: onnxruntime_objc.ORTSession) throws -> Swift.String
+  @objc public static func getOutputName(_ session: onnxruntime_objc.ORTSession) throws -> Swift.String
+  @objc override dynamic public init()
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @objc public class FaceLivenessException : Foundation.NSError {
+  @objc convenience public init(_ message: Swift.String, _ cause: (any Swift.Error)? = nil)
+  @objc override dynamic public init(domain: Swift.String, code: Swift.Int, userInfo dict: [Swift.String : Any]? = nil)
+  @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @objc public class ModelLoadingException : FaceLivenessSDK.FaceLivenessException {
+  @objc convenience public init(_ message: Swift.String, _ cause: (any Swift.Error)? = nil)
+  @objc override dynamic public init(domain: Swift.String, code: Swift.Int, userInfo dict: [Swift.String : Any]? = nil)
+  @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @objc public class InvalidImageException : FaceLivenessSDK.FaceLivenessException {
+  @objc convenience public init(_ message: Swift.String)
+  @objc override dynamic public init(domain: Swift.String, code: Swift.Int, userInfo dict: [Swift.String : Any]? = nil)
+  @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @objc public class FaceDetectionException : FaceLivenessSDK.FaceLivenessException {
+  @objc convenience public init(_ message: Swift.String, _ cause: (any Swift.Error)? = nil)
+  @objc override dynamic public init(domain: Swift.String, code: Swift.Int, userInfo dict: [Swift.String : Any]? = nil)
+  @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @objc public class LivenessException : FaceLivenessSDK.FaceLivenessException {
+  @objc convenience public init(_ message: Swift.String, _ cause: (any Swift.Error)? = nil)
+  @objc override dynamic public init(domain: Swift.String, code: Swift.Int, userInfo dict: [Swift.String : Any]? = nil)
+  @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @objc public class OcclusionDetectionException : FaceLivenessSDK.FaceLivenessException {
+  @objc convenience public init(_ message: Swift.String, _ cause: (any Swift.Error)? = nil)
+  @objc override dynamic public init(domain: Swift.String, code: Swift.Int, userInfo dict: [Swift.String : Any]? = nil)
+  @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @objc public class QualityCheckException : FaceLivenessSDK.FaceLivenessException {
+  @objc convenience public init(_ message: Swift.String, _ cause: (any Swift.Error)? = nil)
+  @objc override dynamic public init(domain: Swift.String, code: Swift.Int, userInfo dict: [Swift.String : Any]? = nil)
+  @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+@objc public class DetectionResult : ObjectiveC.NSObject {
+  @objc final public let label: Swift.String
+  @objc final public let confidence: Swift.Float
+  @objc public init(label: Swift.String, confidence: Swift.Float)
+  @objc override dynamic public var description: Swift.String {
+    @objc get
+  }
+  @objc deinit
+}
+@objc public class FaceLivenessModel : ObjectiveC.NSObject {
+  @objc final public let prediction: Swift.String
+  @objc final public let confidence: Swift.Float
+  @objc final public let failureReason: Swift.String?
+  @objc public init(prediction: Swift.String, confidence: Swift.Float, failureReason: Swift.String? = nil)
+  @objc public var isLive: Swift.Bool {
+    @objc get
+  }
+  @objc override dynamic public var description: Swift.String {
+    @objc get
+  }
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @objc public class FaceOcclusionDetector : ObjectiveC.NSObject {
+  @objc override dynamic public init()
+  @objc public func detectFaceMask(image: UIKit.UIImage) throws -> FaceLivenessSDK.DetectionResult
+  @objc public func reloadModel() -> Swift.Bool
+  @objc public func close()
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @objc public class ImageQualityResult : ObjectiveC.NSObject {
+  @objc public var brightnessScore: Swift.Float
+  @objc public var sharpnessScore: Swift.Float
+  @objc public var faceScore: Swift.Float
+  @objc public var hasFace: Swift.Bool
+  @objc public var overallScore: Swift.Float
+  @objc public static let BRIGHTNESS_WEIGHT: Swift.Float
+  @objc public static let SHARPNESS_WEIGHT: Swift.Float
+  @objc public static let FACE_WEIGHT: Swift.Float
+  @objc public static let ACCEPTABLE_SCORE_THRESHOLD: Swift.Float
+  @objc public static func createDefault() -> FaceLivenessSDK.ImageQualityResult
+  @objc public func calculateOverallScore()
+  @objc public func isAcceptable() -> Swift.Bool
+  @objc public func getDetailedReport() -> [Swift.String : Any]
+  @objc override dynamic public var description: Swift.String {
+    @objc get
+  }
+  @objc override dynamic public init()
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @objc public class LivenessDetector : ObjectiveC.NSObject {
+  @objc override dynamic public init()
+  @objc public func runInference(image: UIKit.UIImage) -> [Swift.String : Any]?
+  @objc public func reloadModel() -> Swift.Bool
+  @objc public func close()
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers @objc public class FaceLivenessSDK : ObjectiveC.NSObject {
+  @_hasMissingDesignatedInitializers @objc public class Config : ObjectiveC.NSObject {
+    final public let enableDebugLogging: Swift.Bool
+    final public let skipQualityCheck: Swift.Bool
+    final public let skipOcclusionCheck: Swift.Bool
+    @_inheritsConvenienceInitializers @objc public class Builder : ObjectiveC.NSObject {
+      @objc public func setDebugLoggingEnabled(_ enabled: Swift.Bool) -> FaceLivenessSDK.FaceLivenessSDK.Config.Builder
+      @objc public func setSkipQualityCheck(_ skip: Swift.Bool) -> FaceLivenessSDK.FaceLivenessSDK.Config.Builder
+      @objc public func setSkipOcclusionCheck(_ skip: Swift.Bool) -> FaceLivenessSDK.FaceLivenessSDK.Config.Builder
+      @objc public func build() -> FaceLivenessSDK.FaceLivenessSDK.Config
+      @objc override dynamic public init()
+      @objc deinit
+    }
+    @objc deinit
+  }
+  @objc public class func create() -> FaceLivenessSDK.FaceLivenessSDK
+  @objc public class func create(config: FaceLivenessSDK.FaceLivenessSDK.Config) -> FaceLivenessSDK.FaceLivenessSDK
+  @objc public func detectLiveness(image: UIKit.UIImage, completion: @escaping (FaceLivenessSDK.FaceLivenessModel?, (any Swift.Error)?) -> Swift.Void)
+  @objc public func getVersion() -> Swift.String
+  @objc public func close()
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @objc public class ImageQualityChecker : ObjectiveC.NSObject {
+  @objc public func checkImageQuality(image: UIKit.UIImage) throws -> FaceLivenessSDK.ImageQualityResult
+  @objc public func close()
+  @objc deinit
+  @objc override dynamic public init()
+}

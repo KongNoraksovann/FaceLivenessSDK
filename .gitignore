@@ -1,0 +1,54 @@
+# macOS system files
+.DS_Store
+
+# Xcode
+DerivedData/
+.idea/
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcodeproj/*.pbxuser
+*.xcodeproj/project.xcworkspace/
+*.xcworkspace/xcuserdata/
+*.xcworkspace/xcshareddata/
+
+# Build artifacts
+build/
+*.ipa
+*.app
+*.dSYM.zip
+*.dSYM
+*.xcarchive
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# CocoaPods
+Pods/
+*.xcworkspace
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Flutter
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter/
+.metadata
+.micronaut/
+.vscode/
+*.lock
+*.iml
+
+# General
+*.log
+*.tmp
+*.swp

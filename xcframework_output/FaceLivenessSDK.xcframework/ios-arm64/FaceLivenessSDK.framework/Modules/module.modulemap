@@ -1,0 +1,11 @@
+framework module FaceLivenessSDK {
+  umbrella header "FaceLivenessSDK.h"
+  export *
+
+  module * { export * }
+}
+
+module FaceLivenessSDK.Swift {
+  header "FaceLivenessSDK-Swift.h"
+  requires objc
+}

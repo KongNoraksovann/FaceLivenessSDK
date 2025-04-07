@@ -1,8 +1,4 @@
-//
 //  LogUtils.swift
-//  FaceLivenessSDK
-
-
 import Foundation
 import os.log
 
@@ -100,4 +96,3 @@ import os.log
         }
     }
 }
-

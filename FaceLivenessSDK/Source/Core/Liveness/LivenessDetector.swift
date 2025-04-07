@@ -1,7 +1,7 @@
+//  LivenessDetector.swift
 import Foundation
 import UIKit
 import onnxruntime_objc
-
 /**
  * Handles face liveness detection using ONNX runtime
  */
@@ -20,7 +20,6 @@ import onnxruntime_objc
     private var ortSession: ORTSession?
     private var ortEnv: ORTEnv?
     private var isModelLoaded = false
-    
     /**
      * Initialize the detector
      */

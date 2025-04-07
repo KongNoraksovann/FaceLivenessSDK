@@ -1,15 +1,10 @@
-// BitmapUtils.swift
+//BitmapUtils.swift
 import Foundation
 import UIKit
 import onnxruntime_objc
 
-/**
- * Utility functions for image processing and manipulation
- */
 @objc public class BitmapUtils: NSObject {
     private static let TAG = "BitmapUtils"
-    
-    // ImageNet normalization values
     private static let mean: [Float] = [0.485, 0.456, 0.406]
     private static let std: [Float] = [0.229, 0.224, 0.225]
     
@@ -39,7 +34,6 @@ import onnxruntime_objc
             LogUtils.e(TAG, "Image has no CGImage representation")
             return false
         }
-        
         return true
     }
     
@@ -49,81 +43,26 @@ import onnxruntime_objc
         defer { UIGraphicsEndImageContext() }
         
         image.draw(in: CGRect(origin: .zero, size: size))
-        return UIGraphicsGetImageFromCurrentImageContext()
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        
+        LogUtils.d(TAG, "Image resized to: \(width)x\(height)")
+        return resizedImage
     }
-    
-    @objc public static func calculateAverageBrightness(_ image: UIImage) -> Float {
-        guard let cgImage = image.cgImage else {
-            LogUtils.e(TAG, "Cannot calculate brightness: no CGImage")
-            return 0.0
+
+    @objc public static func normalizeImage(_ image: UIImage, width: Int, height: Int, means: [Float], stds: [Float]) -> [Float]? {
+        guard let resizedImage = resizeImage(image, width: width, height: height),
+              let cgImage = resizedImage.cgImage else {
+            LogUtils.e(TAG, "Failed to resize image or get CGImage")
+            return nil
         }
-        
-        let width = cgImage.width
-        let height = cgImage.height
-        
-        let stepSize = max(1, min(width, height) / 50)
         
         guard let context = createARGBBitmapContext(from: cgImage) else {
             LogUtils.e(TAG, "Failed to create bitmap context")
-            return 0.0
+            return nil
         }
         
         guard let data = context.data else {
             LogUtils.e(TAG, "No bitmap data available")
-            return 0.0
-        }
-        
-        let pixelData = data.bindMemory(to: UInt8.self, capacity: width * height * 4)
-        var total: Int64 = 0
-        var count = 0
-        
-        for y in stride(from: 0, to: height, by: stepSize) {
-            for x in stride(from: 0, to: width, by: stepSize) {
-                let offset = 4 * (y * width + x)
-                let r = Int(pixelData[offset])
-                let g = Int(pixelData[offset + 1])
-                let b = Int(pixelData[offset + 2])
-                
-                let brightness = Int((0.299 * Float(r) + 0.587 * Float(g) + 0.114 * Float(b)))
-                total += Int64(brightness)
-                count += 1
-            }
-        }
-        
-        return Float(total) / Float(count)
-    }
-    
-    private static func createARGBBitmapContext(from image: CGImage) -> CGContext? {
-        let width = image.width
-        let height = image.height
-        let bytesPerRow = width * 4
-        let bitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
-        
-        guard let context = CGContext(data: nil,
-                                    width: width,
-                                    height: height,
-                                    bitsPerComponent: 8,
-                                    bytesPerRow: bytesPerRow,
-                                    space: CGColorSpaceCreateDeviceRGB(),
-                                    bitmapInfo: bitmapInfo) else {
-            return nil
-        }
-        
-        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
-        return context
-    }
-    
-    @objc public static func normalizeImage(_ image: UIImage, width: Int, height: Int, means: [Float], stds: [Float]) -> [Float]? {
-        guard let resizedImage = resizeImage(image, width: width, height: height),
-              let cgImage = resizedImage.cgImage else {
-            return nil
-        }
-        
-        guard let context = createARGBBitmapContext(from: cgImage) else {
-            return nil
-        }
-        
-        guard let data = context.data else {
             return nil
         }
         
@@ -136,17 +75,17 @@ import onnxruntime_objc
             let channelOffset = c * height * width
             let meanVal = means[c]
             let stdVal = stds[c]
-            
             for h in 0..<height {
                 for w in 0..<width {
                     let pixelOffset = h * bytesPerRow + w * 4
-                    let channelIndex = [2, 1, 0][c]
+                    let channelIndex = [2, 1, 0][c] // RGB order
                     let pixelValue = Float(pixelData[pixelOffset + channelIndex]) / 255.0
                     normalizedData[channelOffset + h * width + w] = (pixelValue - meanVal) / stdVal
                 }
             }
         }
         
+        LogUtils.d(TAG, "Image normalized successfully")
         return normalizedData
     }
     
@@ -201,13 +140,6 @@ import onnxruntime_objc
         
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
         
-        let middlePixelIdx = pixelCount / 2
-        let r = Float(data[middlePixelIdx * 4]) / 255.0
-        let g = Float(data[middlePixelIdx * 4 + 1]) / 255.0
-        let b = Float(data[middlePixelIdx * 4 + 2]) / 255.0
-        LogUtils.d(TAG, "Sample middle pixel RGB normalized: [\(r), \(g), \(b)]")
-        LogUtils.d(TAG, "Sample middle pixel after normalization: [{\((r - mean[0]) / std[0])}, \((g - mean[1]) / std[1]), \((b - mean[2]) / std[2])]")
-        
         let expectedSize = 1 * 3 * inputWidth * inputHeight
         var floatArray = [Float](repeating: 0.0, count: expectedSize)
         LogUtils.d(TAG, "floatArray size: \(floatArray.count), expected: \(expectedSize)")
@@ -238,5 +170,62 @@ import onnxruntime_objc
             LogUtils.e(TAG, "Error creating input tensor: \(error.localizedDescription)")
             return nil
         }
+    }
+    
+    private static func createARGBBitmapContext(from image: CGImage) -> CGContext? {
+        let width = image.width
+        let height = image.height
+        let bytesPerRow = width * 4
+        let bitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+        
+        guard let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: bytesPerRow,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: bitmapInfo
+        ) else {
+            return nil
+        }
+        
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return context
+    }
+    
+    // Added calculateAverageBrightness
+    @objc public static func calculateAverageBrightness(_ image: UIImage) -> Float {
+        guard validateImage(image),
+              let cgImage = image.cgImage,
+              let pixelData = cgImage.dataProvider?.data,
+              let data = CFDataGetBytePtr(pixelData) else {
+            LogUtils.e(TAG, "Failed to access image data for brightness calculation")
+            return 0.0
+        }
+        
+        let width = cgImage.width
+        let height = cgImage.height
+        let bytesPerPixel = cgImage.bitsPerPixel / 8
+        let bytesPerRow = cgImage.bytesPerRow
+        
+        var totalBrightness: Float = 0.0
+        var pixelCount: Float = 0.0
+        
+        for y in stride(from: 0, to: height, by: max(1, height / 50)) {
+            for x in stride(from: 0, to: width, by: max(1, width / 50)) {
+                let offset = y * bytesPerRow + x * bytesPerPixel
+                let r = Float(data[offset]) / 255.0
+                let g = Float(data[offset + 1]) / 255.0
+                let b = Float(data[offset + 2]) / 255.0
+                let brightness = 0.299 * r + 0.587 * g + 0.114 * b
+                totalBrightness += brightness
+                pixelCount += 1.0
+            }
+        }
+        
+        let avgBrightness = pixelCount > 0 ? (totalBrightness / pixelCount) * 255.0 : 0.0
+        LogUtils.d(TAG, "Calculated average brightness: \(avgBrightness)")
+        return avgBrightness
     }
 }

@@ -1,223 +1,281 @@
+//FaceOcclusionDetector.swift
 import Foundation
 import UIKit
 import onnxruntime_objc
 
-/**
- * Detects face occlusions such as masks or hands covering the face
- */
-@objc public class FaceOcclusionDetector: NSObject {
-    // Constants
-    private let TAG = "FaceOcclusionDetector"
-    private let MODEL_NAME = "FaceOcclusion"
-    private let IMAGE_SIZE = 224
-    private let HAND_OVER_FACE_INDEX = 0
-    private let NORMAL_INDEX = 1
-    private let WITH_MASK_INDEX = 2
-    private let NORMAL_CONFIDENCE_THRESHOLD: Float = 0.7
+public class FaceOcclusionDetector: NSObject {
+    // MARK: - Constants
+    private enum Constants {
+        static let tag = "FaceOcclusionDetector"
+        static let modelName = "FaceOcclusion" // Ensure this matches the actual file (e.g., "FaceOcclusion.onnx")
+        static let imageSize = 224
+        static let handOverFaceIndex = 0
+        static let normalIndex = 1
+        static let withMaskIndex = 2
+        static let normalConfidenceThreshold: Float = 0.7
+        static let expectedClassCount = 3
+    }
     
-    // Class mapping
     private let classNames: [Int: String] = [
         0: "hand_over_face",
         1: "normal",
         2: "with_mask"
     ]
     
+    // MARK: - Properties
     private var ortSession: ORTSession?
     private var ortEnv: ORTEnv?
     private var isModelLoaded = false
     
-    /**
-     * Initialize the detector
-     */
+    // MARK: - Initialization
     public override init() {
         super.init()
         loadModel()
     }
     
-    /**
-     * Load the ONNX model
-     */
+    // MARK: - Model Loading
     private func loadModel() {
         do {
-            // Create environment
-            ortEnv = try ORTEnv(loggingLevel: ORTLoggingLevel.warning)
-            
-            guard let modelURL = try? ModelUtils.loadModelFromBundle(MODEL_NAME) else {
-                LogUtils.e(TAG, "Failed to get model URL")
+            ortEnv = try ORTEnv(loggingLevel: .warning)
+            guard let modelURL = Bundle.main.url(forResource: Constants.modelName, withExtension: "onnx") else {
+                LogUtils.e(Constants.tag, "Failed to get model URL")
                 isModelLoaded = false
                 return
             }
             
-            // Create session options
             let sessionOptions = try ORTSessionOptions()
             try sessionOptions.setIntraOpNumThreads(1)
-            try sessionOptions.setGraphOptimizationLevel(ORTGraphOptimizationLevel.all)
+            try sessionOptions.setGraphOptimizationLevel(.all)
             
-            // Create session
-            ortSession = try ORTSession(env: ortEnv!, modelPath: modelURL.path, sessionOptions: sessionOptions)
+            ortSession = try ORTSession(
+                env: ortEnv!,
+                modelPath: modelURL.path,
+                sessionOptions: sessionOptions
+            )
+            
             isModelLoaded = true
-            LogUtils.d(TAG, "Model loaded successfully from: \(modelURL.path)")
+            LogUtils.d(Constants.tag, "Model loaded successfully from: \(modelURL.path)")
         } catch {
             isModelLoaded = false
-            LogUtils.e(TAG, "Error loading model: \(error.localizedDescription)", error)
+            LogUtils.e(Constants.tag, "Error loading model: \(error.localizedDescription)", error)
         }
     }
     
-    /**
-     * Detect if face is occluded by mask or hand
-     *
-     * @param image Image to analyze
-     * @return DetectionResult containing class name and confidence
-     * @throws OcclusionDetectionException if detection fails
-     */
-    @objc public func detectFaceMask(image: UIImage) throws -> DetectionResult {
-        LogUtils.d(TAG, "Starting face occlusion detection")
+    // MARK: - Public Interface
+    public func detectFaceMask(image: UIImage) throws -> DetectionResult {
+        LogUtils.d(Constants.tag, "Starting face occlusion detection")
         
-        // Validate input
-        guard BitmapUtils.validateImage(image) else {
-            LogUtils.e(TAG, "Invalid input image")
-            throw InvalidImageException("Invalid input image")
+        // Validate input image
+        guard image.cgImage != nil else {
+            LogUtils.e(Constants.tag, "Invalid input image")
+            throw FaceOcclusionError.invalidImage
         }
         
-        // If model failed to load, return normal with low confidence
-        // This allows the pipeline to continue instead of failing
-        guard isModelLoaded, let session = ortSession, let env = ortEnv else {
-            LogUtils.w(TAG, "Model not loaded, assuming normal face with low confidence")
+        // Check model state
+        guard isModelLoaded, let session = ortSession else {
+            LogUtils.w(Constants.tag, "Model not loaded, assuming normal face with low confidence")
             return DetectionResult(label: "normal", confidence: 0.7)
         }
         
         do {
             // Prepare input tensor
-            let inputNames = try session.inputNames()
-            let outputNames = try session.outputNames()
-            
-            guard let inputName = inputNames.first, let outputName = outputNames.first else {
-                throw OcclusionDetectionException("Failed to get input/output names")
-            }
-            
-            // Normalize image for the model
-            // Using ImageNet normalization values
-            guard let normalizedImageData = BitmapUtils.normalizeImage(
-                image,
-                width: IMAGE_SIZE,
-                height: IMAGE_SIZE,
-                means: [0.485, 0.456, 0.406],
-                stds: [0.229, 0.224, 0.225]
-            ) else {
-                throw OcclusionDetectionException("Failed to normalize image")
-            }
-            
-            // Convert to Data
-            let data = Data(bytes: normalizedImageData, count: normalizedImageData.count * MemoryLayout<Float>.stride)
-            let nsData = data as NSData
-            
-            // Create shape array
-            let inputShape: [NSNumber] = [1, 3, NSNumber(value: IMAGE_SIZE), NSNumber(value: IMAGE_SIZE)]
-            
-            // Create input tensor - adjust this based on your API
-            let inputTensor = try ORTValue(tensorData: nsData as! NSMutableData,
-                                          elementType: ORTTensorElementDataType.float,
-                                          shape: inputShape)
-            
-            // Create run options
-            let runOptions = try ORTRunOptions()
+            let inputTensor = try prepareInputTensor(from: image)
             
             // Run inference
-            let inputs = [inputName: inputTensor]
-            let outputs = try session.run(
-                withInputs: inputs,
-                outputNames: [outputName],
-                runOptions: runOptions
-            )
+            let outputs = try runInference(session: session, inputTensor: inputTensor)
             
-            guard let outputTensor = outputs[outputName] else {
-                throw OcclusionDetectionException("No output tensor")
-            }
-            
-            // Extract results - adjust based on your API
-            let floatArray = try extractFloatArray(from: outputTensor)
-            
-            // Log all probabilities for debugging
-            for (index, prob) in floatArray.enumerated() {
-                if index < classNames.count {
-                    LogUtils.d(TAG, "Class \(classNames[index] ?? "Unknown"): \(prob)")
-                }
-            }
-            
-            // Find max probability class
-            var maxIndex = 0
-            var maxProb: Float = 0.0
-            
-            for i in 0..<min(floatArray.count, classNames.count) {
-                if floatArray[i] > maxProb {
-                    maxProb = floatArray[i]
-                    maxIndex = i
-                }
-            }
-            
-            // Apply the custom condition:
-            // If predicted class is "normal" but confidence < threshold,
-            // choose either "with_mask" or "hand_over_face" based on highest probability
-            if maxIndex == NORMAL_INDEX && maxProb < NORMAL_CONFIDENCE_THRESHOLD {
-                LogUtils.d(TAG, "Normal class detected with low confidence: \(maxProb), reassigning...")
-                
-                // Get the probabilities of the other two classes
-                let maskProb = floatArray[WITH_MASK_INDEX]
-                let handOverFaceProb = floatArray[HAND_OVER_FACE_INDEX]
-                
-                // Choose the class with higher probability between mask and hand over face
-                if maskProb > handOverFaceProb {
-                    LogUtils.d(TAG, "Reassigned to with_mask with probability: \(maskProb)")
-                    return DetectionResult(label: "with_mask", confidence: maskProb)
-                } else {
-                    LogUtils.d(TAG, "Reassigned to hand_over_face with probability: \(handOverFaceProb)")
-                    return DetectionResult(label: "hand_over_face", confidence: handOverFaceProb)
-                }
-            }
-            
-            // Standard case - return the highest probability class
-            let className = classNames[maxIndex] ?? "Unknown"
-            return DetectionResult(label: className, confidence: maxProb)
-            
+            // Process output
+            return try processOutput(outputs: outputs)
         } catch {
-            LogUtils.e(TAG, "Error during inference: \(error.localizedDescription)", error)
-            throw OcclusionDetectionException("Error during occlusion detection: \(error.localizedDescription)", error)
+            LogUtils.e(Constants.tag, "Error during inference: \(error.localizedDescription)", error)
+            throw error
         }
     }
     
-    // Helper method to extract float values from tensor - adjust based on your API
-    private func extractFloatArray(from tensor: ORTValue) throws -> [Float] {
-        // Get tensor data as NSArray
-        guard let data = try tensor.tensorData() as? [NSNumber] else {
-            throw OcclusionDetectionException("Failed to get tensor data as array")
-        }
-
-        // Convert NSNumber array to Float array
-        return data.map { $0.floatValue }
-    }
-    
-    /**
-     * Try to reload model if it failed to load initially
-     *
-     * @return true if model loaded successfully
-     */
-    @objc public func reloadModel() -> Bool {
-        if isModelLoaded { return true }
-        
+    public func reloadModel() -> Bool {
+        guard !isModelLoaded else { return true }
         loadModel()
         return isModelLoaded
     }
     
-    /**
-     * Close and release resources
-     */
-    @objc public func close() {
+    public func close() {
         ortSession = nil
         ortEnv = nil
-        LogUtils.d(TAG, "FaceOcclusionDetector resources released")
+        LogUtils.d(Constants.tag, "FaceOcclusionDetector resources released")
     }
     
     deinit {
         close()
     }
+    
+    // MARK: - Private Methods
+    private func prepareInputTensor(from image: UIImage) throws -> ORTValue {
+        // Resize to 224x224
+        guard let resizedImage = resizeImage(image, toSize: CGSize(width: Constants.imageSize, height: Constants.imageSize)),
+              let cgImage = resizedImage.cgImage else {
+            throw FaceOcclusionError.imageNormalizationFailed
+        }
+        
+        // Convert to RGB float buffer normalized to [0, 1]
+        let width = Constants.imageSize
+        let height = Constants.imageSize
+        let pixelCount = width * height
+        let bytesPerPixel = 4
+        let data = UnsafeMutablePointer<UInt8>.allocate(capacity: pixelCount * bytesPerPixel)
+        defer { data.deallocate() }
+        
+        let context = CGContext(
+            data: data,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: width * bytesPerPixel,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        )
+        context?.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        
+        var floatArray = [Float](repeating: 0, count: 3 * pixelCount)
+        for c in 0..<3 {
+            for i in 0..<pixelCount {
+                let value: Float = Float(data[i * bytesPerPixel + c]) / 255.0
+                floatArray[c * pixelCount + i] = value
+            }
+        }
+        
+        let dataBuffer = Data(bytes: floatArray, count: floatArray.count * MemoryLayout<Float>.stride)
+        let inputShape: [NSNumber] = [1, 3, NSNumber(value: Constants.imageSize), NSNumber(value: Constants.imageSize)]
+        
+        return try ORTValue(
+            tensorData: NSMutableData(data: dataBuffer),
+            elementType: .float,
+            shape: inputShape
+        )
+    }
+    
+    private func resizeImage(_ image: UIImage, toSize size: CGSize) -> UIImage? {
+        UIGraphicsBeginImageContextWithOptions(size, false, 1.0)
+        image.draw(in: CGRect(origin: .zero, size: size))
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return resizedImage
+    }
+    
+    private func runInference(session: ORTSession, inputTensor: ORTValue) throws -> [String: ORTValue] {
+        let inputNames = try session.inputNames()
+        let outputNames = try session.outputNames()
+        
+        guard let inputName = inputNames.first, let outputName = outputNames.first else {
+            throw FaceOcclusionError.modelIOFailure
+        }
+        
+        let runOptions = try ORTRunOptions()
+        return try session.run(
+            withInputs: [inputName: inputTensor],
+            outputNames: [outputName],
+            runOptions: runOptions
+        )
+    }
+    
+    private func processOutput(outputs: [String: ORTValue]) throws -> DetectionResult {
+        guard let outputTensor = outputs.values.first else {
+            throw FaceOcclusionError.noOutputTensor
+        }
+        
+        let floatArray = try extractProbabilities(from: outputTensor)
+        logClassProbabilities(floatArray)
+        
+        let (maxIndex, maxProb) = findMaxProbability(floatArray)
+        
+        if maxIndex == Constants.normalIndex && maxProb < Constants.normalConfidenceThreshold {
+            return handleLowConfidenceNormalCase(floatArray)
+        }
+        
+        guard let className = classNames[maxIndex] else {
+            throw FaceOcclusionError.unknownClass
+        }
+        
+        return DetectionResult(label: className, confidence: maxProb)
+    }
+    
+    private func extractProbabilities(from tensor: ORTValue) throws -> [Float] {
+        guard let tensorData = try tensor.tensorData() as? NSData else {
+            throw FaceOcclusionError.tensorDataExtractionFailed
+        }
+        
+        let expectedByteCount = Constants.expectedClassCount * MemoryLayout<Float>.size
+        guard tensorData.length == expectedByteCount else {
+            throw FaceOcclusionError.invalidTensorSize(
+                actual: tensorData.length,
+                expected: expectedByteCount
+            )
+        }
+        
+        let floatBuffer = tensorData.bytes.assumingMemoryBound(to: Float.self)
+        return Array(UnsafeBufferPointer(start: floatBuffer, count: Constants.expectedClassCount))
+    }
+    
+    private func logClassProbabilities(_ probabilities: [Float]) {
+        for (index, prob) in probabilities.enumerated() where index < classNames.count {
+            let className = classNames[index] ?? "Unknown"
+            LogUtils.d(Constants.tag, "Class \(className): \(prob)")
+        }
+    }
+    
+    private func findMaxProbability(_ probabilities: [Float]) -> (index: Int, probability: Float) {
+        var maxIndex = 0
+        var maxProb: Float = 0.0
+        
+        for (index, prob) in probabilities.enumerated() where index < classNames.count {
+            if prob > maxProb {
+                maxProb = prob
+                maxIndex = index
+            }
+        }
+        
+        return (maxIndex, maxProb)
+    }
+    
+    private func handleLowConfidenceNormalCase(_ probabilities: [Float]) -> DetectionResult {
+        let maskProb = probabilities[Constants.withMaskIndex]
+        let handOverFaceProb = probabilities[Constants.handOverFaceIndex]
+        
+        if maskProb > handOverFaceProb {
+            LogUtils.d(Constants.tag, "Reassigned to with_mask with probability: \(maskProb)")
+            return DetectionResult(label: "with_mask", confidence: maskProb)
+        } else {
+            LogUtils.d(Constants.tag, "Reassigned to hand_over_face with probability: \(handOverFaceProb)")
+            return DetectionResult(label: "hand_over_face", confidence: handOverFaceProb)
+        }
+    }
 }
+
+// MARK: - Error Handling
+extension FaceOcclusionDetector {
+    public enum FaceOcclusionError: Error {
+        case invalidImage
+        case modelNotLoaded
+        case imageNormalizationFailed
+        case modelIOFailure
+        case noOutputTensor
+        case tensorDataExtractionFailed
+        case invalidTensorSize(actual: Int, expected: Int)
+        case unknownClass
+        
+        var localizedDescription: String {
+            switch self {
+            case .invalidImage: return "Invalid input image"
+            case .modelNotLoaded: return "Model not loaded"
+            case .imageNormalizationFailed: return "Failed to normalize image"
+            case .modelIOFailure: return "Failed to get model input/output names"
+            case .noOutputTensor: return "No output tensor from model"
+            case .tensorDataExtractionFailed: return "Failed to extract tensor data"
+            case .invalidTensorSize(let actual, let expected):
+                return "Invalid tensor size (actual: \(actual), expected: \(expected))"
+            case .unknownClass: return "Unknown class detected"
+            }
+        }
+    }
+}
+
+

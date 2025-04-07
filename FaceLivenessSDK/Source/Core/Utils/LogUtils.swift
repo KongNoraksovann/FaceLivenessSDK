@@ -1,9 +1,7 @@
 //
 //  LogUtils.swift
 //  FaceLivenessSDK
-//
-//  Created by Sreang on 22/3/25.
-//
+
 
 import Foundation
 import os.log
@@ -102,3 +100,4 @@ import os.log
         }
     }
 }
+

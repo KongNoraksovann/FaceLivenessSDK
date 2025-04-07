@@ -1,11 +1,6 @@
-//
 //  Exceptions.swift
-//  FaceLivenessSDK
-//
-//  Created by Sreang on 22/3/25.
-//
-
 import Foundation
+import os
 
 /**
  * Base exception class for all SDK exceptions

@@ -1,75 +1,142 @@
-//  ImageQualityResult.swift
+//ImageQualityChecker.swift
 import Foundation
-/**
- * Represents the result of image quality check
- */
-@objc public class ImageQualityResult: NSObject {
-    @objc public var brightnessScore: Float = 0.0
-    @objc public var sharpnessScore: Float = 0.0
-    @objc public var faceScore: Float = 0.0
-    @objc public var hasFace: Bool = false
-    @objc public var overallScore: Float = 0.0
+import UIKit
+import CoreImage
+import MLKitVision
+import MLKitFaceDetection
+
+@objc public class ImageQualityChecker: NSObject {
+    private let TAG = "ImageQualityChecker"
     
-    // Weights for each component - made as constants for better maintainability
-    @objc public static let BRIGHTNESS_WEIGHT: Float = 0.3
-    @objc public static let SHARPNESS_WEIGHT: Float = 0.3
-    @objc public static let FACE_WEIGHT: Float = 0.4
+    private let BRIGHTNESS_TOO_DARK: Float = 40.0
+    private let BRIGHTNESS_SOMEWHAT_DARK: Float = 80.0
+    private let BRIGHTNESS_GOOD_UPPER: Float = 180.0
+    private let BRIGHTNESS_SOMEWHAT_BRIGHT: Float = 220.0
     
-    // Minimum acceptable overall score
-    @objc public static let ACCEPTABLE_SCORE_THRESHOLD: Float = 0.5
+    private let SHARPNESS_VERY_BLURRY: Float = 5.0
+    private let SHARPNESS_SOMEWHAT_BLURRY: Float = 10.0
+    private let SHARPNESS_GOOD_UPPER: Float = 50.0
+    private let SHARPNESS_TOO_DETAILED: Float = 100.0
     
-    /**
-     * Create a default instance for cases where quality check is skipped
-     */
-    @objc public static func createDefault() -> ImageQualityResult {
-        let result = ImageQualityResult()
-        result.brightnessScore = 0.0
-        result.sharpnessScore = 0.0
-        result.faceScore = 0.0
-        result.hasFace = false  // Important: this will cause isAcceptable() to return false
-        result.overallScore = 0.0
-        return result
+    private let faceDetector: FaceDetector
+    
+    override init() {
+        let options = FaceDetectorOptions()
+        options.performanceMode = .fast
+        options.minFaceSize = 0.2
+        options.landmarkMode = .none
+        options.classificationMode = .none
+        self.faceDetector = FaceDetector.faceDetector(options: options)
+        super.init()
     }
     
-    /**
-     * Calculates the overall score based on weighted components
-     */
-    @objc public func calculateOverallScore() {
-        if !hasFace {
-            overallScore = 0.0
-        } else {
-            overallScore = (brightnessScore * ImageQualityResult.BRIGHTNESS_WEIGHT +
-                    sharpnessScore * ImageQualityResult.SHARPNESS_WEIGHT +
-                    faceScore * ImageQualityResult.FACE_WEIGHT)
-            
-            // Ensure score is between 0 and 1
-            overallScore = max(0.0, min(1.0, overallScore))
+    @available(iOSApplicationExtension 13.0.0, *)
+    @objc public func checkImageQuality(image: UIImage) async throws -> ImageQualityResult {
+        LogUtils.d(TAG, "Checking image quality for image: \(Int(image.size.width))x\(Int(image.size.height))")
+        
+        guard BitmapUtils.validateImage(image) else {
+            LogUtils.e(TAG, "Invalid image provided")
+            throw QualityCheckException("Invalid image provided")
+        }
+        
+        let result = ImageQualityResult()
+        
+        result.brightnessScore = checkBrightness(image)
+        result.sharpnessScore = checkSharpness(image)
+        
+        do {
+            let hasFace = try await checkFacePresence(image)
+            result.hasFace = hasFace
+            result.faceScore = hasFace ? 1.0 : 0.0
+            result.calculateOverallScore()
+            return result
+        } catch {
+            LogUtils.e(TAG, "Error in quality check: \(error.localizedDescription)", error)
+            throw QualityCheckException("Error in quality check: \(error.localizedDescription)", error)
         }
     }
     
-    /**
-     * Determines if the image quality is acceptable for further processing
-     */
-    @objc public func isAcceptable() -> Bool {
-        return hasFace && overallScore >= ImageQualityResult.ACCEPTABLE_SCORE_THRESHOLD
+    private func checkBrightness(_ image: UIImage) -> Float {
+        let avgBrightness = BitmapUtils.calculateAverageBrightness(image)
+        
+        let score: Float
+        switch avgBrightness {
+        case ..<BRIGHTNESS_TOO_DARK: score = avgBrightness / BRIGHTNESS_TOO_DARK
+        case BRIGHTNESS_TOO_DARK..<BRIGHTNESS_SOMEWHAT_DARK: score = 0.5 + (avgBrightness - BRIGHTNESS_TOO_DARK) / 80.0
+        case BRIGHTNESS_SOMEWHAT_DARK..<BRIGHTNESS_GOOD_UPPER: score = 1.0
+        case BRIGHTNESS_GOOD_UPPER..<BRIGHTNESS_SOMEWHAT_BRIGHT: score = 1.0 - (avgBrightness - BRIGHTNESS_GOOD_UPPER) / 80.0
+        default: score = 0.5 - (avgBrightness - BRIGHTNESS_SOMEWHAT_BRIGHT) / 70.0
+        }
+        
+        return max(0.0, min(1.0, score))
     }
     
-    /**
-     * Get detailed breakdown of all component scores
-     */
-    @objc public func getDetailedReport() -> [String: Any] {
-        return [
-            "overallScore": overallScore,
-            "brightnessScore": brightnessScore,
-            "sharpnessScore": sharpnessScore,
-            "faceScore": faceScore,
-            "hasFace": hasFace,
-            "isAcceptable": isAcceptable()
-        ]
+    private func checkSharpness(_ image: UIImage) -> Float {
+        guard let cgImage = image.cgImage else { return 0.5 }
+        
+        let width = cgImage.width
+        let height = cgImage.height
+        
+        if width < 10 || height < 10 {
+            LogUtils.w(TAG, "Image too small for reliable sharpness calculation")
+            return 0.5
+        }
+        
+        let avgGrad = calculateLaplacianVariance(image)
+        
+        let score: Float
+        switch avgGrad {
+        case ..<SHARPNESS_VERY_BLURRY: score = avgGrad / SHARPNESS_VERY_BLURRY
+        case SHARPNESS_VERY_BLURRY..<SHARPNESS_SOMEWHAT_BLURRY: score = 0.5 + (avgGrad - SHARPNESS_VERY_BLURRY) / 10.0
+        case SHARPNESS_SOMEWHAT_BLURRY..<SHARPNESS_GOOD_UPPER: score = 1.0
+        case SHARPNESS_GOOD_UPPER..<SHARPNESS_TOO_DETAILED: score = 1.0 - (avgGrad - SHARPNESS_GOOD_UPPER) / 100.0
+        default: score = 0.5
+        }
+        
+        return max(0.0, min(1.0, score))
     }
     
-    public override var description: String {
-        return String(format: "Quality: %.2f (Brightness: %.2f, Sharpness: %.2f, Face: %.2f)",
-                     overallScore, brightnessScore, sharpnessScore, faceScore)
+    private func calculateLaplacianVariance(_ image: UIImage) -> Float {
+        guard let cgImage = image.cgImage else { return 0.0 }
+        
+        let ciImage = CIImage(cgImage: cgImage)
+        let context = CIContext(options: nil)
+        
+        guard let edgeFilter = CIFilter(name: "CIEdges") else { return 0.0 }
+        
+        edgeFilter.setValue(ciImage, forKey: kCIInputImageKey)
+        
+        guard let outputImage = edgeFilter.outputImage,
+              let outputCGImage = context.createCGImage(outputImage, from: outputImage.extent) else {
+            return 0.0
+        }
+        
+        let edgeUIImage = UIImage(cgImage: outputCGImage)
+        return BitmapUtils.calculateAverageBrightness(edgeUIImage) * 0.5
+    }
+    
+    @available(iOSApplicationExtension 13.0.0, *)
+    private func checkFacePresence(_ image: UIImage) async throws -> Bool {
+        let visionImage = VisionImage(image: image)
+        visionImage.orientation = image.imageOrientation
+        do {
+            let faces = try await faceDetector.process(visionImage)
+            let faceDetected = !faces.isEmpty
+            LogUtils.d(TAG, "Face detection result: \(faceDetected ? "Face detected" : "No face detected")")
+            return faceDetected
+        } catch {
+            LogUtils.e(TAG, "MLKit face detection failed: \(error.localizedDescription)")
+            throw FaceDetectionException("MLKit face detection failed: \(error.localizedDescription)", error)
+        }
+    }
+    
+    @objc public func close() {
+        LogUtils.d(TAG, "ImageQualityChecker resources released")
+    }
+    
+    deinit {
+        close()
     }
 }
+
+

@@ -1,6 +1,5 @@
 //  Exceptions.swift
 import Foundation
-import os
 
 /**
  * Base exception class for all SDK exceptions

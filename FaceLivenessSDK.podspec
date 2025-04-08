@@ -5,7 +5,7 @@ Pod::Spec.new do |liveness|
   liveness.homepage         = 'https://github.com/KongNoraksovann/FaceLivenessSDK'
   liveness.authors          = { 'Kong Noraksovann' => 'kongnoraksovann247@gmail.com' }
   liveness.summary          = 'Acleda FaceLivenessSDK for iOS.'
-  liveness.source           = { :git => 'https://github.com/KongNoraksovann/FaceLivenessSDK.git', :tag => 'v1.0.0' }
+  liveness.source = { :git => 'git@github.com:KongNoraksovann/FaceLivenessSDK.git', :tag => 'v1.0.0' }
   liveness.module_name      = 'FaceLivenessSDK'
   liveness.swift_version    = '5.0'
   liveness.static_framework = true

@@ -7,19 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6EAEB81831BAABA701EC931E /* Pods_FaceLivenessSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC924D7FBE7BCDF94445C687 /* Pods_FaceLivenessSDK.framework */; };
+		8D427B259E5130D681931609 /* Pods_FaceLivenessSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CD689C9ECE527E73BA2D6E9B /* Pods_FaceLivenessSDK.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		121094D0A98BDFA82924EC38 /* Pods-FaceLivenessSDK.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FaceLivenessSDK.release.xcconfig"; path = "Target Support Files/Pods-FaceLivenessSDK/Pods-FaceLivenessSDK.release.xcconfig"; sourceTree = "<group>"; };
-		8CA52419BC6608B1107C69CA /* Pods-FaceLivenessSDK.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FaceLivenessSDK.debug.xcconfig"; path = "Target Support Files/Pods-FaceLivenessSDK/Pods-FaceLivenessSDK.debug.xcconfig"; sourceTree = "<group>"; };
-		BC924D7FBE7BCDF94445C687 /* Pods_FaceLivenessSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_FaceLivenessSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		FC6C52C62D8E9D8900671000 /* FaceLivenessSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FaceLivenessSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		235DB568BDAB98CA7BC8C717 /* Pods-FaceLivenessSDK.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FaceLivenessSDK.release.xcconfig"; path = "Target Support Files/Pods-FaceLivenessSDK/Pods-FaceLivenessSDK.release.xcconfig"; sourceTree = "<group>"; };
+		4D3212F92D9112BB0001B150 /* FaceLivenessSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FaceLivenessSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C321A145B6F4A1FE65875B51 /* Pods-FaceLivenessSDK.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FaceLivenessSDK.debug.xcconfig"; path = "Target Support Files/Pods-FaceLivenessSDK/Pods-FaceLivenessSDK.debug.xcconfig"; sourceTree = "<group>"; };
+		CD689C9ECE527E73BA2D6E9B /* Pods_FaceLivenessSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_FaceLivenessSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		FC6C52CD2D8E9D8900671000 /* Exceptions for "FaceLivenessSDK" folder in "FaceLivenessSDK" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				"Source/Onnx Models/FaceOcclusion.onnx",
+			);
 			publicHeaders = (
 				FaceLivenessSDK.h,
 			);
@@ -43,28 +47,28 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6EAEB81831BAABA701EC931E /* Pods_FaceLivenessSDK.framework in Frameworks */,
+				8D427B259E5130D681931609 /* Pods_FaceLivenessSDK.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		07E44590E7058E87CC587A80 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CD689C9ECE527E73BA2D6E9B /* Pods_FaceLivenessSDK.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		C7DA8659412D44B2F9EAAF40 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				8CA52419BC6608B1107C69CA /* Pods-FaceLivenessSDK.debug.xcconfig */,
-				121094D0A98BDFA82924EC38 /* Pods-FaceLivenessSDK.release.xcconfig */,
+				C321A145B6F4A1FE65875B51 /* Pods-FaceLivenessSDK.debug.xcconfig */,
+				235DB568BDAB98CA7BC8C717 /* Pods-FaceLivenessSDK.release.xcconfig */,
 			);
 			path = Pods;
-			sourceTree = "<group>";
-		};
-		EB8A2C4CE96E942FF0313ACB /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				BC924D7FBE7BCDF94445C687 /* Pods_FaceLivenessSDK.framework */,
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		FC6C52BC2D8E9D8900671000 = {
@@ -73,14 +77,14 @@
 				FC6C52C82D8E9D8900671000 /* FaceLivenessSDK */,
 				FC6C52C72D8E9D8900671000 /* Products */,
 				C7DA8659412D44B2F9EAAF40 /* Pods */,
-				EB8A2C4CE96E942FF0313ACB /* Frameworks */,
+				07E44590E7058E87CC587A80 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
 		FC6C52C72D8E9D8900671000 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				FC6C52C62D8E9D8900671000 /* FaceLivenessSDK.framework */,
+				4D3212F92D9112BB0001B150 /* FaceLivenessSDK.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -102,11 +106,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = FC6C52CE2D8E9D8900671000 /* Build configuration list for PBXNativeTarget "FaceLivenessSDK" */;
 			buildPhases = (
-				9999078B9DDE6275CA9D40A3 /* [CP] Check Pods Manifest.lock */,
+				7A44C62F0D53D261E4BE27FA /* [CP] Check Pods Manifest.lock */,
 				FC6C52C12D8E9D8900671000 /* Headers */,
 				FC6C52C22D8E9D8900671000 /* Sources */,
 				FC6C52C32D8E9D8900671000 /* Frameworks */,
-				FC6C52C42D8E9D8900671000 /* Resources */,
+				5EDD6F4A2D9A7BF800F8F841 /* Resources */,
+				7D7CA486B03EC46C845C2AF3 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -117,7 +122,7 @@
 			);
 			name = FaceLivenessSDK;
 			productName = FaceLivenessSDK;
-			productReference = FC6C52C62D8E9D8900671000 /* FaceLivenessSDK.framework */;
+			productReference = 4D3212F92D9112BB0001B150 /* FaceLivenessSDK.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
@@ -154,7 +159,7 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		FC6C52C42D8E9D8900671000 /* Resources */ = {
+		5EDD6F4A2D9A7BF800F8F841 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -164,7 +169,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		9999078B9DDE6275CA9D40A3 /* [CP] Check Pods Manifest.lock */ = {
+		7A44C62F0D53D261E4BE27FA /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -186,6 +191,23 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		7D7CA486B03EC46C845C2AF3 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-FaceLivenessSDK/Pods-FaceLivenessSDK-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-FaceLivenessSDK/Pods-FaceLivenessSDK-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-FaceLivenessSDK/Pods-FaceLivenessSDK-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -201,7 +223,7 @@
 /* Begin XCBuildConfiguration section */
 		FC6C52CF2D8E9D8900671000 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8CA52419BC6608B1107C69CA /* Pods-FaceLivenessSDK.debug.xcconfig */;
+			baseConfigurationReference = C321A145B6F4A1FE65875B51 /* Pods-FaceLivenessSDK.debug.xcconfig */;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
@@ -209,11 +231,12 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = NU3QQLTF7F;
+				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_MODULE_VERIFIER = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/FaceLivenessSDK/FaceLivenessSDK\\ 2025-03-22\\ 18-41-07/Products/Library/Frameworks",
@@ -238,8 +261,10 @@
 					"$(PROJECT_DIR)/FaceLivenessSDK/FaceLivenessSDK\\ 2025-03-22\\ 18-41-24/Products/Library/Frameworks",
 					"$(PROJECT_DIR)/FaceLivenessSDK/FaceLivenessSDK\\ 2025-03-22\\ 18-41-24/Products/Library/Frameworks",
 					"$(PROJECT_DIR)/FaceLivenessSDK/FaceLivenessSDK\\ 2025-03-22\\ 18-41-24/Products/Library/Frameworks",
+					"$(PROJECT_DIR)/FaceLivenessSDK/Source/Core",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -262,7 +287,7 @@
 		};
 		FC6C52D02D8E9D8900671000 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 121094D0A98BDFA82924EC38 /* Pods-FaceLivenessSDK.release.xcconfig */;
+			baseConfigurationReference = 235DB568BDAB98CA7BC8C717 /* Pods-FaceLivenessSDK.release.xcconfig */;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
@@ -270,11 +295,12 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = NU3QQLTF7F;
+				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_MODULE_VERIFIER = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/FaceLivenessSDK/FaceLivenessSDK\\ 2025-03-22\\ 18-41-07/Products/Library/Frameworks",
@@ -299,8 +325,10 @@
 					"$(PROJECT_DIR)/FaceLivenessSDK/FaceLivenessSDK\\ 2025-03-22\\ 18-41-24/Products/Library/Frameworks",
 					"$(PROJECT_DIR)/FaceLivenessSDK/FaceLivenessSDK\\ 2025-03-22\\ 18-41-24/Products/Library/Frameworks",
 					"$(PROJECT_DIR)/FaceLivenessSDK/FaceLivenessSDK\\ 2025-03-22\\ 18-41-24/Products/Library/Frameworks",
+					"$(PROJECT_DIR)/FaceLivenessSDK/Source/Core",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -363,7 +391,7 @@
 				ENABLE_MODULE_VERIFIER = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -378,7 +406,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				INFOPLIST_KEY_NSMainStoryboardFile = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 12;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -435,7 +464,7 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -444,7 +473,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				INFOPLIST_KEY_NSMainStoryboardFile = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 12;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
 				MTL_ENABLE_DEBUG_INFO = NO;

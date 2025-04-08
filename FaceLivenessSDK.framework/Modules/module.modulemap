@@ -1,11 +1,17 @@
 framework module FaceLivenessSDK {
-  umbrella header "FaceLivenessSDK.h"
-  export *
+    umbrella header "FaceLivenessSDK.h"
+    export *
 
-  module * { export * }
+    module * { export * }
+
+    // Add onnxruntime-objc
+    module onnxruntime {
+        header "onnxruntime-objc.h"
+        export *
+    }
 }
 
 module FaceLivenessSDK.Swift {
-  header "FaceLivenessSDK-Swift.h"
-  requires objc
+    header "FaceLivenessSDK-Swift.h"
+    requires objc
 }

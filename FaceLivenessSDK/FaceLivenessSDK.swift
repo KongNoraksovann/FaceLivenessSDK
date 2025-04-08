@@ -2,12 +2,13 @@
 //  FaceLivenessSDK.swift
 //  FaceLivenessSDK
 //
-//  Created by Sreang on 22/3/25.
+//  Created by Sovann on 22/3/25.
 //
 
 import Foundation
 import UIKit
 import onnxruntime_objc
+import os
 
 /**
  * Main SDK class for face liveness detection
@@ -161,15 +162,20 @@ import onnxruntime_objc
                     LogUtils.d(self.tag, "Face occlusion check skipped as per configuration")
                 }
                 
-                // REMOVE CHECK QULITY
+                // REMOVE CHECK QUALITY
                 
                 // Step 3: Perform liveness detection
                 LogUtils.d(self.tag, "Image quality acceptable, performing liveness detection")
-                let detectionResult = try self.livenessDetector.runInference(image: image)
+                guard let detectionResult = self.livenessDetector.runInference(image: image) else {
+                    throw FaceLivenessException("Liveness detection failed to return a result")
+                }
+                
+                let label = detectionResult["label"] as! String
+                let confidence = detectionResult["confidence"] as! Float
                 
                 let result = FaceLivenessModel(
-                    prediction: detectionResult.label,
-                    confidence: detectionResult.confidence
+                    prediction: label,
+                    confidence: confidence
                 )
                 
                 LogUtils.d(self.tag, "Detection complete: \(result)")

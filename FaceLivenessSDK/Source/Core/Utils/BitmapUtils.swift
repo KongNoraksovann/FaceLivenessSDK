@@ -2,13 +2,17 @@ import Foundation
 import UIKit
 import onnxruntime_objc
 
+/**
+ * Utility class for image processing operations in the FaceLivenessSDK.
+ * Provides validation, resizing, normalization, and preprocessing for ML models.
+ */
 @objc public class BitmapUtils: NSObject {
     private static let TAG = "BitmapUtils"
-    private static let mean: [Float] = [0.485, 0.456, 0.406]
-    private static let std: [Float] = [0.229, 0.224, 0.225]
     
-    @objc public static let MIN_IMAGE_SIZE = 64
-    @objc public static let MAX_IMAGE_SIZE = 4096
+    @objc public static let mean: [Float] = [0.485, 0.456, 0.406]
+    @objc public static let std: [Float] = [0.229, 0.224, 0.225]
+    @objc public static let MIN_IMAGE_SIZE: Int = 64
+    @objc public static let MAX_IMAGE_SIZE: Int = 4096
     
     @objc public static func validateImage(_ image: UIImage?) -> Bool {
         guard let image = image else {
@@ -98,13 +102,9 @@ import onnxruntime_objc
             return nil
         }
         
-        guard let resizedImage = resizeImage(image, width: inputWidth, height: inputHeight) else {
-            LogUtils.e(TAG, "Failed to resize image")
-            return nil
-        }
-        
-        guard let cgImage = resizedImage.cgImage else {
-            LogUtils.e(TAG, "Failed to get CGImage")
+        guard let resizedImage = resizeImage(image, width: inputWidth, height: inputHeight),
+              let cgImage = resizedImage.cgImage else {
+            LogUtils.e(TAG, "Failed to resize image or get CGImage")
             return nil
         }
         

@@ -1,5 +1,5 @@
-//  FaceLivenessModel.swift
 import Foundation
+
 /**
  * Represents the result of the face liveness detection process
  */
@@ -36,11 +36,11 @@ import Foundation
         return prediction == "Live"
     }
     
-    public override var description: String {
+    @objc public override var description: String {
         if let reason = failureReason {
-            return "FaceLivenessModel(prediction: \(prediction), confidence: \(confidence)), reason: \(reason))"
+            return "FaceLivenessModel(prediction: \(prediction), confidence: \(confidence), reason: \(reason))"
         } else {
-            return "FaceLivenessModel(prediction: \(prediction), confidence: \(confidence)))"
+            return "FaceLivenessModel(prediction: \(prediction), confidence: \(confidence))"
         }
     }
 }

@@ -1,4 +1,3 @@
-//BitmapUtils.swift
 import Foundation
 import UIKit
 import onnxruntime_objc
@@ -194,7 +193,6 @@ import onnxruntime_objc
         return context
     }
     
-    // Added calculateAverageBrightness
     @objc public static func calculateAverageBrightness(_ image: UIImage) -> Float {
         guard validateImage(image),
               let cgImage = image.cgImage,

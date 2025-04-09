@@ -1,4 +1,3 @@
-//FaceOcclusionDetector.swift
 import Foundation
 import UIKit
 import onnxruntime_objc
@@ -65,26 +64,19 @@ public class FaceOcclusionDetector: NSObject {
     public func detectFaceMask(image: UIImage) throws -> DetectionResult {
         LogUtils.d(Constants.tag, "Starting face occlusion detection")
         
-        // Validate input image
         guard image.cgImage != nil else {
             LogUtils.e(Constants.tag, "Invalid input image")
             throw FaceOcclusionError.invalidImage
         }
         
-        // Check model state
         guard isModelLoaded, let session = ortSession else {
             LogUtils.w(Constants.tag, "Model not loaded, assuming normal face with low confidence")
             return DetectionResult(label: "normal", confidence: 0.7)
         }
         
         do {
-            // Prepare input tensor
             let inputTensor = try prepareInputTensor(from: image)
-            
-            // Run inference
             let outputs = try runInference(session: session, inputTensor: inputTensor)
-            
-            // Process output
             return try processOutput(outputs: outputs)
         } catch {
             LogUtils.e(Constants.tag, "Error during inference: \(error.localizedDescription)", error)
@@ -110,13 +102,11 @@ public class FaceOcclusionDetector: NSObject {
     
     // MARK: - Private Methods
     private func prepareInputTensor(from image: UIImage) throws -> ORTValue {
-        // Resize to 224x224
         guard let resizedImage = resizeImage(image, toSize: CGSize(width: Constants.imageSize, height: Constants.imageSize)),
               let cgImage = resizedImage.cgImage else {
             throw FaceOcclusionError.imageNormalizationFailed
         }
         
-        // Convert to RGB float buffer normalized to [0, 1]
         let width = Constants.imageSize
         let height = Constants.imageSize
         let pixelCount = width * height
@@ -262,7 +252,7 @@ extension FaceOcclusionDetector {
         case invalidTensorSize(actual: Int, expected: Int)
         case unknownClass
         
-        var localizedDescription: String {
+        public var localizedDescription: String {
             switch self {
             case .invalidImage: return "Invalid input image"
             case .modelNotLoaded: return "Model not loaded"
@@ -277,5 +267,3 @@ extension FaceOcclusionDetector {
         }
     }
 }
-
-

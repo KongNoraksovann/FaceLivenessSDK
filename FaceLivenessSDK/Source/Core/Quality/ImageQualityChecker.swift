@@ -4,14 +4,21 @@ import CoreImage
 import MLKitVision
 import MLKitFaceDetection
 
+/**
+ * A utility class to assess the quality of an image for face liveness detection.
+ * Evaluates brightness, sharpness, and face presence using predefined thresholds.
+ * Part of the FaceLivenessSDK for external use.
+ */
 @objc public class ImageQualityChecker: NSObject {
     private let TAG = "ImageQualityChecker"
 
+    // Brightness thresholds
     private let BRIGHTNESS_TOO_DARK: Float = 40.0
     private let BRIGHTNESS_SOMEWHAT_DARK: Float = 80.0
     private let BRIGHTNESS_GOOD_UPPER: Float = 180.0
     private let BRIGHTNESS_SOMEWHAT_BRIGHT: Float = 220.0
 
+    // Sharpness thresholds
     private let SHARPNESS_VERY_BLURRY: Float = 5.0
     private let SHARPNESS_SOMEWHAT_BLURRY: Float = 10.0
     private let SHARPNESS_GOOD_UPPER: Float = 50.0
@@ -19,7 +26,11 @@ import MLKitFaceDetection
 
     private let faceDetector: FaceDetector
 
-    @objc override public init() {
+    /**
+     * Initializes the ImageQualityChecker with default ML Kit face detection settings.
+     * Suitable for external use in the FaceLivenessSDK.
+     */
+    @objc public override init() {
         let options = FaceDetectorOptions()
         options.performanceMode = .fast
         options.minFaceSize = 0.2
@@ -29,12 +40,20 @@ import MLKitFaceDetection
         super.init()
     }
 
-    public func checkImageQuality(image: UIImage, completion: @escaping (Result<ImageQualityResult, Error>) -> Void) {
+    /**
+     * Checks the quality of an image and returns the result asynchronously.
+     *
+     * @param image The UIImage to evaluate for brightness, sharpness, and face presence.
+     * @param completion A closure called with the result. Provides either:
+     *                   - result: An ImageQualityResult object if successful.
+     *                   - error: An Error object if the check fails (nil if successful).
+     */
+    @objc public func checkImageQuality(image: UIImage, completion: @escaping (ImageQualityResult?, Error?) -> Void) {
         LogUtils.d(self.TAG, "Checking image quality for image: \(Int(image.size.width))x\(Int(image.size.height))")
 
         guard BitmapUtils.validateImage(image) else {
             LogUtils.e(self.TAG, "Invalid image provided")
-            completion(.failure(QualityCheckException("Invalid image provided")))
+            completion(nil, QualityCheckException("Invalid image provided"))
             return
         }
 
@@ -46,14 +65,14 @@ import MLKitFaceDetection
         checkFacePresence(image) { hasFace, error in
             if let error = error {
                 LogUtils.e(self.TAG, "Error in quality check: \(error.localizedDescription)", error)
-                completion(.failure(QualityCheckException("Error in quality check: \(error.localizedDescription)", error)))
+                completion(nil, QualityCheckException("Error in quality check: \(error.localizedDescription)", error))
                 return
             }
 
             result.hasFace = hasFace
             result.faceScore = hasFace ? 1.0 : 0.0
             result.calculateOverallScore()
-            completion(.success(result))
+            completion(result, nil)
         }
     }
 
@@ -63,10 +82,10 @@ import MLKitFaceDetection
         let score: Float
         switch avgBrightness {
         case ..<BRIGHTNESS_TOO_DARK: score = avgBrightness / BRIGHTNESS_TOO_DARK
-        case BRIGHTNESS_TOO_DARK..<BRIGHTNESS_SOMEWHAT_DARK: score = 0.5 + (avgBrightness - BRIGHTNESS_TOO_DARK) / 80.0
+        case BRIGHTNESS_TOO_DARK..<BRIGHTNESS_SOMEWHAT_DARK: score = 0.5 + (avgBrightness - BRIGHTNESS_TOO_DARK) / (BRIGHTNESS_SOMEWHAT_DARK - BRIGHTNESS_TOO_DARK)
         case BRIGHTNESS_SOMEWHAT_DARK..<BRIGHTNESS_GOOD_UPPER: score = 1.0
-        case BRIGHTNESS_GOOD_UPPER..<BRIGHTNESS_SOMEWHAT_BRIGHT: score = 1.0 - (avgBrightness - BRIGHTNESS_GOOD_UPPER) / 80.0
-        default: score = 0.5 - (avgBrightness - BRIGHTNESS_SOMEWHAT_BRIGHT) / 70.0
+        case BRIGHTNESS_GOOD_UPPER..<BRIGHTNESS_SOMEWHAT_BRIGHT: score = 1.0 - (avgBrightness - BRIGHTNESS_GOOD_UPPER) / (BRIGHTNESS_SOMEWHAT_BRIGHT - BRIGHTNESS_GOOD_UPPER)
+        default: score = 0.5 - (avgBrightness - BRIGHTNESS_SOMEWHAT_BRIGHT) / (255.0 - BRIGHTNESS_SOMEWHAT_BRIGHT)
         }
 
         return max(0.0, min(1.0, score))
@@ -88,9 +107,9 @@ import MLKitFaceDetection
         let score: Float
         switch avgGrad {
         case ..<SHARPNESS_VERY_BLURRY: score = avgGrad / SHARPNESS_VERY_BLURRY
-        case SHARPNESS_VERY_BLURRY..<SHARPNESS_SOMEWHAT_BLURRY: score = 0.5 + (avgGrad - SHARPNESS_VERY_BLURRY) / 10.0
+        case SHARPNESS_VERY_BLURRY..<SHARPNESS_SOMEWHAT_BLURRY: score = 0.5 + (avgGrad - SHARPNESS_VERY_BLURRY) / (SHARPNESS_SOMEWHAT_BLURRY - SHARPNESS_VERY_BLURRY)
         case SHARPNESS_SOMEWHAT_BLURRY..<SHARPNESS_GOOD_UPPER: score = 1.0
-        case SHARPNESS_GOOD_UPPER..<SHARPNESS_TOO_DETAILED: score = 1.0 - (avgGrad - SHARPNESS_GOOD_UPPER) / 100.0
+        case SHARPNESS_GOOD_UPPER..<SHARPNESS_TOO_DETAILED: score = 1.0 - (avgGrad - SHARPNESS_GOOD_UPPER) / (SHARPNESS_TOO_DETAILED - SHARPNESS_GOOD_UPPER)
         default: score = 0.5
         }
 
@@ -132,6 +151,10 @@ import MLKitFaceDetection
         }
     }
 
+    /**
+     * Releases resources held by the ImageQualityChecker.
+     * Call this when the checker is no longer needed to free up memory.
+     */
     @objc public func close() {
         LogUtils.d(self.TAG, "ImageQualityChecker resources released")
     }
@@ -140,6 +163,3 @@ import MLKitFaceDetection
         close()
     }
 }
-
-
-

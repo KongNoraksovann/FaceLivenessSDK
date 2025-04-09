@@ -1,7 +1,8 @@
 import Foundation
 
 /**
- * Represents the result of image quality check
+ * Represents the result of an image quality check in the FaceLivenessSDK.
+ * Includes scores for brightness, sharpness, and face presence, with an overall weighted score.
  */
 @objc public class ImageQualityResult: NSObject {
     @objc public var brightnessScore: Float = 0.0
@@ -10,53 +11,36 @@ import Foundation
     @objc public var hasFace: Bool = false
     @objc public var overallScore: Float = 0.0
     
-    // Weights for each component - made as constants for better maintainability
-    @objc public static let BRIGHTNESS_WEIGHT: Float = 0.3
-    @objc public static let SHARPNESS_WEIGHT: Float = 0.3
-    @objc public static let FACE_WEIGHT: Float = 0.4
+    @objc public static let brightnessWeight: Float = 0.3
+    @objc public static let sharpnessWeight: Float = 0.3
+    @objc public static let faceWeight: Float = 0.4
+    @objc public static let acceptableScoreThreshold: Float = 0.5
     
-    // Minimum acceptable overall score
-    @objc public static let ACCEPTABLE_SCORE_THRESHOLD: Float = 0.5
-    
-    /**
-     * Create a default instance for cases where quality check is skipped
-     */
     @objc public static func createDefault() -> ImageQualityResult {
         let result = ImageQualityResult()
         result.brightnessScore = 0.0
         result.sharpnessScore = 0.0
         result.faceScore = 0.0
-        result.hasFace = false  // Important: this will cause isAcceptable() to return false
+        result.hasFace = false
         result.overallScore = 0.0
         return result
     }
     
-    /**
-     * Calculates the overall score based on weighted components
-     */
     @objc public func calculateOverallScore() {
         if !hasFace {
             overallScore = 0.0
         } else {
-            overallScore = (brightnessScore * ImageQualityResult.BRIGHTNESS_WEIGHT +
-                            sharpnessScore * ImageQualityResult.SHARPNESS_WEIGHT +
-                            faceScore * ImageQualityResult.FACE_WEIGHT)
-            
-            // Ensure score is between 0 and 1
+            overallScore = (brightnessScore * Self.brightnessWeight +
+                            sharpnessScore * Self.sharpnessWeight +
+                            faceScore * Self.faceWeight)
             overallScore = max(0.0, min(1.0, overallScore))
         }
     }
     
-    /**
-     * Determines if the image quality is acceptable for further processing
-     */
     @objc public func isAcceptable() -> Bool {
-        return hasFace && overallScore >= ImageQualityResult.ACCEPTABLE_SCORE_THRESHOLD
+        return hasFace && overallScore >= Self.acceptableScoreThreshold
     }
     
-    /**
-     * Get detailed breakdown of all component scores
-     */
     @objc public func getDetailedReport() -> [String: Any] {
         return [
             "overallScore": overallScore,

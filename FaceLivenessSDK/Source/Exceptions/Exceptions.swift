@@ -1,8 +1,5 @@
 import Foundation
 
-/**
- * Base exception class for all SDK exceptions
- */
 @objc public class FaceLivenessException: NSError {
     @objc public convenience init(_ message: String, _ cause: Error? = nil) {
         let userInfo: [String: Any] = [
@@ -13,9 +10,6 @@ import Foundation
     }
 }
 
-/**
- * Exception thrown when there are issues loading ML models
- */
 @objc public class ModelLoadingException: FaceLivenessException {
     @objc public convenience init(_ message: String, _ cause: Error? = nil) {
         let userInfo: [String: Any] = [
@@ -26,9 +20,6 @@ import Foundation
     }
 }
 
-/**
- * Exception thrown when the input image is invalid
- */
 @objc public class InvalidImageException: FaceLivenessException {
     @objc public convenience init(_ message: String) {
         let userInfo: [String: Any] = [
@@ -38,9 +29,6 @@ import Foundation
     }
 }
 
-/**
- * Exception thrown when face detection fails
- */
 @objc public class FaceDetectionException: FaceLivenessException {
     @objc public convenience init(_ message: String, _ cause: Error? = nil) {
         let userInfo: [String: Any] = [
@@ -51,9 +39,6 @@ import Foundation
     }
 }
 
-/**
- * Exception thrown when liveness detection fails
- */
 @objc public class LivenessException: FaceLivenessException {
     @objc public convenience init(_ message: String, _ cause: Error? = nil) {
         let userInfo: [String: Any] = [
@@ -64,9 +49,6 @@ import Foundation
     }
 }
 
-/**
- * Exception thrown when occlusion detection fails
- */
 @objc public class OcclusionDetectionException: FaceLivenessException {
     @objc public convenience init(_ message: String, _ cause: Error? = nil) {
         let userInfo: [String: Any] = [
@@ -77,9 +59,6 @@ import Foundation
     }
 }
 
-/**
- * Exception thrown when quality check fails
- */
 @objc public class QualityCheckException: FaceLivenessException {
     @objc public convenience init(_ message: String, _ cause: Error? = nil) {
         let userInfo: [String: Any] = [

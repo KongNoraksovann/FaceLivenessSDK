@@ -1,4 +1,3 @@
-//  DetectionResult.swift
 import Foundation
 
 /**
@@ -9,10 +8,12 @@ import Foundation
      * The prediction result label
      */
     @objc public let label: String
+    
     /**
      * Confidence level in the prediction (0.0 to 1.0)
      */
     @objc public let confidence: Float
+    
     /**
      * Initialize a new detection result
      */
@@ -21,7 +22,8 @@ import Foundation
         self.confidence = confidence
         super.init()
     }
-    public override var description: String {
+    
+    @objc public override var description: String {
         return "DetectionResult(label: \(label), confidence: \(confidence))"
     }
 }

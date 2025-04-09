@@ -19,7 +19,7 @@ import MLKitFaceDetection
 
     private let faceDetector: FaceDetector
 
-    override init() {
+    @objc public override init() {
         let options = FaceDetectorOptions()
         options.performanceMode = .fast
         options.minFaceSize = 0.2
@@ -29,7 +29,7 @@ import MLKitFaceDetection
         super.init()
     }
 
-    public func checkImageQuality(image: UIImage, completion: @escaping (Result<ImageQualityResult, Error>) -> Void) {
+        public func checkImageQuality(image: UIImage, completion: @escaping (Result<ImageQualityResult, Error>) -> Void) {
         LogUtils.d(self.TAG, "Checking image quality for image: \(Int(image.size.width))x\(Int(image.size.height))")
 
         guard BitmapUtils.validateImage(image) else {
@@ -140,4 +140,5 @@ import MLKitFaceDetection
         close()
     }
 }
+
 

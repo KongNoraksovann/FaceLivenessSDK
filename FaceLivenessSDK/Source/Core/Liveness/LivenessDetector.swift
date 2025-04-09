@@ -1,7 +1,7 @@
-//  LivenessDetector.swift
 import Foundation
 import UIKit
 import onnxruntime_objc
+
 /**
  * Handles face liveness detection using ONNX runtime
  */
@@ -20,10 +20,11 @@ import onnxruntime_objc
     private var ortSession: ORTSession?
     private var ortEnv: ORTEnv?
     private var isModelLoaded = false
+    
     /**
      * Initialize the detector
      */
-    public override init() {
+    @objc public override init() {
         super.init()
         loadModel()
     }
@@ -33,7 +34,6 @@ import onnxruntime_objc
      */
     private func loadModel() {
         do {
-            // Create environment
             ortEnv = try ORTEnv(loggingLevel: ORTLoggingLevel.warning)
             
             guard let modelURL = try? ModelUtils.loadModelFromBundle(MODEL_NAME) else {
@@ -42,12 +42,10 @@ import onnxruntime_objc
                 return
             }
             
-            // Create session options
             let sessionOptions = try ORTSessionOptions()
             try sessionOptions.setIntraOpNumThreads(1)
             try sessionOptions.setGraphOptimizationLevel(ORTGraphOptimizationLevel.all)
             
-            // Create session
             ortSession = try ORTSession(env: ortEnv!, modelPath: modelURL.path, sessionOptions: sessionOptions)
             isModelLoaded = true
             LogUtils.d(TAG, "Model loaded successfully from: \(modelURL.path)")
@@ -66,27 +64,23 @@ import onnxruntime_objc
     @objc public func runInference(image: UIImage) -> [String: Any]? {
         LogUtils.d(TAG, "Starting liveness inference on face image: \(Int(image.size.width))x\(Int(image.size.height))")
         
-        // Validate input
         guard BitmapUtils.validateImage(image) else {
             LogUtils.e(TAG, "Invalid input image")
             return nil
         }
         
-        // If model failed to load
         guard isModelLoaded, let session = ortSession else {
             LogUtils.e(TAG, "Model not loaded")
             return nil
         }
         
         do {
-            // Prepare input tensor
             guard let inputNames = try? session.inputNames(),
                   let inputName = inputNames.first else {
                 LogUtils.e(TAG, "No input name found")
                 return nil
             }
             
-            // Normalize image for the model
             guard let normalizedImageData = BitmapUtils.normalizeImage(
                 image,
                 width: INPUT_SIZE,
@@ -98,14 +92,11 @@ import onnxruntime_objc
                 return nil
             }
             
-            // Create properly formatted mutable data for tensor input
             let dataLength = normalizedImageData.count * MemoryLayout<Float>.stride
             let nsData = NSMutableData(bytes: normalizedImageData, length: dataLength)
             
-            // Create shape array
             let inputShape: [NSNumber] = [1, 3, NSNumber(value: INPUT_SIZE), NSNumber(value: INPUT_SIZE)]
             
-            // Create input tensor
             guard let inputTensor = try? ORTValue(tensorData: nsData,
                                                 elementType: ORTTensorElementDataType.float,
                                                 shape: inputShape) else {
@@ -113,7 +104,6 @@ import onnxruntime_objc
                 return nil
             }
             
-            // Run inference
             LogUtils.d(TAG, "Running model inference")
             let outputNames: Set<String> = ["output"]
             let inputs = [inputName: inputTensor]
@@ -128,7 +118,6 @@ import onnxruntime_objc
                 return nil
             }
             
-            // Process output
             guard let outputTensor = outputs["output"],
                   let outputData = try? outputTensor.tensorData() else {
                 LogUtils.e(TAG, "Failed to get output tensor or data")
@@ -165,12 +154,10 @@ import onnxruntime_objc
     // Helper method to extract float values from tensor
     private func extractFloatArray(from tensor: ORTValue) throws -> [Float] {
         do {
-            // First, try using the tensor data as an array of NSNumber
             if let data = try tensor.tensorData() as? [NSNumber] {
                 return data.map { $0.floatValue }
             }
             
-            // Alternative method: get raw data and convert to float array
             if let tensorData = try tensor.tensorData() as? NSData {
                 let count = tensorData.length / MemoryLayout<Float>.stride
                 var floatArray = [Float](repeating: 0, count: count)
@@ -211,3 +198,5 @@ import onnxruntime_objc
         close()
     }
 }
+
+

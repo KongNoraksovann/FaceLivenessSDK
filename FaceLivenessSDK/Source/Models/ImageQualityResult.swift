@@ -1,5 +1,5 @@
-//  ImageQualityResult.swift
 import Foundation
+
 /**
  * Represents the result of image quality check
  */
@@ -39,8 +39,8 @@ import Foundation
             overallScore = 0.0
         } else {
             overallScore = (brightnessScore * ImageQualityResult.BRIGHTNESS_WEIGHT +
-                    sharpnessScore * ImageQualityResult.SHARPNESS_WEIGHT +
-                    faceScore * ImageQualityResult.FACE_WEIGHT)
+                            sharpnessScore * ImageQualityResult.SHARPNESS_WEIGHT +
+                            faceScore * ImageQualityResult.FACE_WEIGHT)
             
             // Ensure score is between 0 and 1
             overallScore = max(0.0, min(1.0, overallScore))
@@ -68,8 +68,8 @@ import Foundation
         ]
     }
     
-    public override var description: String {
+    @objc public override var description: String {
         return String(format: "Quality: %.2f (Brightness: %.2f, Sharpness: %.2f, Face: %.2f)",
-                     overallScore, brightnessScore, sharpnessScore, faceScore)
+                      overallScore, brightnessScore, sharpnessScore, faceScore)
     }
 }

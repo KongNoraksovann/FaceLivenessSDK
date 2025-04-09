@@ -1,4 +1,3 @@
-//  ModelUtils.swift
 import Foundation
 import onnxruntime_objc
 
@@ -36,14 +35,10 @@ import onnxruntime_objc
         do {
             let modelURL = try loadModelFromBundle(modelName)
             
-            // Create session options
             let sessionOptions = try ORTSessionOptions()
-            
-            // Enable optimization if needed
             try sessionOptions.setIntraOpNumThreads(1)
             try sessionOptions.setGraphOptimizationLevel(ORTGraphOptimizationLevel.all)
             
-            // Create session
             let ortEnv = try ORTEnv(loggingLevel: ORTLoggingLevel.warning)
             let session = try ORTSession(env: ortEnv, modelPath: modelURL.path, sessionOptions: sessionOptions)
             
@@ -74,14 +69,12 @@ import onnxruntime_objc
             }
             
             do {
-                // Get documents directory for app
                 let documentsURL = try fileManager.url(for: .documentDirectory,
                                                       in: .userDomainMask,
                                                       appropriateFor: nil,
                                                       create: true)
                 let destURL = documentsURL.appendingPathComponent("\(modelName).onnx")
                 
-                // Only copy if the file doesn't exist or is outdated
                 if !fileManager.fileExists(atPath: destURL.path) {
                     try fileManager.copyItem(at: bundleURL, to: destURL)
                     LogUtils.d(TAG, "Copied \(modelName).onnx to documents directory")
@@ -133,3 +126,4 @@ import onnxruntime_objc
         }
     }
 }
+

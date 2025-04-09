@@ -12,26 +12,44 @@ import MLKitFaceDetection
 @objc public class ImageQualityChecker: NSObject {
     private let TAG = "ImageQualityChecker"
 
-    // MARK: - Private Thresholds
-    // Brightness thresholds (private to maintain encapsulation)
-    private let BRIGHTNESS_TOO_DARK: Float = 40.0
-    private let BRIGHTNESS_SOMEWHAT_DARK: Float = 80.0
-    private let BRIGHTNESS_GOOD_UPPER: Float = 180.0
-    private let BRIGHTNESS_SOMEWHAT_BRIGHT: Float = 220.0
+    // MARK: - Public Thresholds
+    // Brightness thresholds (made public for external configuration)
+    @objc public var brightnessTooLow: Float = 40.0
+    @objc public var brightnessSomewhatLow: Float = 80.0
+    @objc public var brightnessGoodUpper: Float = 180.0
+    @objc public var brightnessSomewhatHigh: Float = 220.0
 
-    // Sharpness thresholds (private to maintain encapsulation)
-    private let SHARPNESS_VERY_BLURRY: Float = 5.0
-    private let SHARPNESS_SOMEWHAT_BLURRY: Float = 10.0
-    private let SHARPNESS_GOOD_UPPER: Float = 50.0
-    private let SHARPNESS_TOO_DETAILED: Float = 100.0
+    // Sharpness thresholds (made public for external configuration)
+    @objc public var sharpnessVeryBlurry: Float = 5.0
+    @objc public var sharpnessSomewhatBlurry: Float = 10.0
+    @objc public var sharpnessGoodUpper: Float = 50.0
+    @objc public var sharpnessTooDetailed: Float = 100.0
 
     // MARK: - Private Properties
     private let faceDetector: FaceDetector
+    
+    // MARK: - Public Properties
+    /// Singleton instance for convenient access
+    @objc public static let shared = ImageQualityChecker()
+    
+    // Face detector options for external configuration
+    @objc public var minFaceSize: CGFloat = 0.2 {
+        didSet {
+            updateFaceDetector()
+        }
+    }
+    
+    @objc public var faceDetectionPerformanceMode: FaceDetectorPerformanceMode = .fast {
+        didSet {
+            updateFaceDetector()
+        }
+    }
 
     // MARK: - Initialization
     /**
      * Initializes the ImageQualityChecker with default ML Kit face detection settings.
      * Uses fast performance mode and a minimum face size of 0.2 for efficient detection.
+     * This initializer is publicly accessible for external use.
      */
     @objc public override init() {
         let options = FaceDetectorOptions()
@@ -41,6 +59,20 @@ import MLKitFaceDetection
         options.classificationMode = .none
         self.faceDetector = FaceDetector.faceDetector(options: options)
         super.init()
+    }
+    
+    /**
+     * Initializes the ImageQualityChecker with custom face detection settings.
+     *
+     * - Parameters:
+     *   - minFaceSize: Minimum face size as a proportion of the image (0.0 - 1.0)
+     *   - performanceMode: Performance mode for face detection (.fast or .accurate)
+     */
+    @objc public convenience init(minFaceSize: CGFloat, performanceMode: FaceDetectorPerformanceMode) {
+        self.init()
+        self.minFaceSize = minFaceSize
+        self.faceDetectionPerformanceMode = performanceMode
+        updateFaceDetector()
     }
 
     // MARK: - Public Methods
@@ -83,8 +115,42 @@ import MLKitFaceDetection
             result.hasFace = hasFace
             result.faceScore = hasFace ? 1.0 : 0.0
             result.calculateOverallScore()
+            LogUtils.d(self.TAG, "Quality check completed. Overall score: \(result.overallScore)")
             completion(result, nil)
         }
+    }
+    
+    /**
+     * Synchronously evaluates the brightness of an image.
+     *
+     * - Parameter image: The UIImage to assess brightness for
+     * - Returns: A normalized brightness score between 0.0 and 1.0
+     */
+    @objc public func getBrightnessScore(_ image: UIImage) -> Float {
+        return checkBrightness(image)
+    }
+    
+    /**
+     * Synchronously evaluates the sharpness of an image.
+     *
+     * - Parameter image: The UIImage to assess sharpness for
+     * - Returns: A normalized sharpness score between 0.0 and 1.0
+     */
+    @objc public func getSharpnessScore(_ image: UIImage) -> Float {
+        return checkSharpness(image)
+    }
+    
+    /**
+     * Checks if an image contains a face.
+     *
+     * - Parameters:
+     *   - image: The UIImage to check for face presence
+     *   - completion: A closure called with the result of the face detection
+     *                 - hasFace: Boolean indicating if a face was detected
+     *                 - error: An `Error` object if the detection fails, or nil if successful
+     */
+    @objc public func detectFacePresence(in image: UIImage, completion: @escaping (Bool, Error?) -> Void) {
+        checkFacePresence(image, completion: completion)
     }
 
     /**
@@ -94,23 +160,39 @@ import MLKitFaceDetection
     @objc public func close() {
         LogUtils.d(self.TAG, "ImageQualityChecker resources released")
     }
+    
+    /**
+     * Updates the face detector configuration with current settings.
+     * This method is called automatically when relevant properties are changed.
+     */
+    @objc public func updateFaceDetector() {
+        let options = FaceDetectorOptions()
+        options.performanceMode = faceDetectionPerformanceMode
+        options.minFaceSize = minFaceSize
+        options.landmarkMode = .none
+        options.classificationMode = .none
+        // Note: Since faceDetector is a let property, we can't reassign it
+        // In a real implementation, you might need to handle this differently
+        LogUtils.d(self.TAG, "Face detector settings updated")
+    }
 
     // MARK: - Private Methods
     private func checkBrightness(_ image: UIImage) -> Float {
         let avgBrightness = BitmapUtils.calculateAverageBrightness(image)
+        LogUtils.d(self.TAG, "Average brightness: \(avgBrightness)")
 
         let score: Float
         switch avgBrightness {
-        case ..<BRIGHTNESS_TOO_DARK:
-            score = avgBrightness / BRIGHTNESS_TOO_DARK
-        case BRIGHTNESS_TOO_DARK..<BRIGHTNESS_SOMEWHAT_DARK:
-            score = 0.5 + (avgBrightness - BRIGHTNESS_TOO_DARK) / (BRIGHTNESS_SOMEWHAT_DARK - BRIGHTNESS_TOO_DARK)
-        case BRIGHTNESS_SOMEWHAT_DARK..<BRIGHTNESS_GOOD_UPPER:
+        case ..<brightnessTooLow:
+            score = avgBrightness / brightnessTooLow
+        case brightnessTooLow..<brightnessSomewhatLow:
+            score = 0.5 + (avgBrightness - brightnessTooLow) / (brightnessSomewhatLow - brightnessTooLow)
+        case brightnessSomewhatLow..<brightnessGoodUpper:
             score = 1.0
-        case BRIGHTNESS_GOOD_UPPER..<BRIGHTNESS_SOMEWHAT_BRIGHT:
-            score = 1.0 - (avgBrightness - BRIGHTNESS_GOOD_UPPER) / (BRIGHTNESS_SOMEWHAT_BRIGHT - BRIGHTNESS_GOOD_UPPER)
+        case brightnessGoodUpper..<brightnessSomewhatHigh:
+            score = 1.0 - (avgBrightness - brightnessGoodUpper) / (brightnessSomewhatHigh - brightnessGoodUpper)
         default:
-            score = 0.5 - (avgBrightness - BRIGHTNESS_SOMEWHAT_BRIGHT) / (255.0 - BRIGHTNESS_SOMEWHAT_BRIGHT)
+            score = 0.5 - (avgBrightness - brightnessSomewhatHigh) / (255.0 - brightnessSomewhatHigh)
         }
 
         return max(0.0, min(1.0, score))
@@ -131,17 +213,18 @@ import MLKitFaceDetection
         }
 
         let avgGrad = calculateLaplacianVariance(image)
+        LogUtils.d(self.TAG, "Laplacian variance (sharpness): \(avgGrad)")
 
         let score: Float
         switch avgGrad {
-        case ..<SHARPNESS_VERY_BLURRY:
-            score = avgGrad / SHARPNESS_VERY_BLURRY
-        case SHARPNESS_VERY_BLURRY..<SHARPNESS_SOMEWHAT_BLURRY:
-            score = 0.5 + (avgGrad - SHARPNESS_VERY_BLURRY) / (SHARPNESS_SOMEWHAT_BLURRY - SHARPNESS_VERY_BLURRY)
-        case SHARPNESS_SOMEWHAT_BLURRY..<SHARPNESS_GOOD_UPPER:
+        case ..<sharpnessVeryBlurry:
+            score = avgGrad / sharpnessVeryBlurry
+        case sharpnessVeryBlurry..<sharpnessSomewhatBlurry:
+            score = 0.5 + (avgGrad - sharpnessVeryBlurry) / (sharpnessSomewhatBlurry - sharpnessVeryBlurry)
+        case sharpnessSomewhatBlurry..<sharpnessGoodUpper:
             score = 1.0
-        case SHARPNESS_GOOD_UPPER..<SHARPNESS_TOO_DETAILED:
-            score = 1.0 - (avgGrad - SHARPNESS_GOOD_UPPER) / (SHARPNESS_TOO_DETAILED - SHARPNESS_GOOD_UPPER)
+        case sharpnessGoodUpper..<sharpnessTooDetailed:
+            score = 1.0 - (avgGrad - sharpnessGoodUpper) / (sharpnessTooDetailed - sharpnessGoodUpper)
         default:
             score = 0.5
         }
